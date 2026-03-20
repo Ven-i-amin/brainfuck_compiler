@@ -4,7 +4,7 @@ from antlr4 import *
 from brainfuck import brainfuck as BrainfuckMachine
 from brainfuck_ast import ProgramNode, build_ast
 if "." in __name__:
-    from .brainfuckParser import brainfuckParser
+    from gen.brainfuckParser import brainfuckParser
 else:
     from brainfuckParser import brainfuckParser
 

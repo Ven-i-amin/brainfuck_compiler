@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from brainfuckParser import brainfuckParser
+from gen.brainfuckParser import brainfuckParser
 
 
 @dataclass
