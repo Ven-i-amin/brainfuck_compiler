@@ -4,6 +4,22 @@ from dataclasses import dataclass
 
 from gen.brainfuckParser import brainfuckParser
 
+try:
+    from gen.brainfuckParser import brainfuckParser
+    ANTLR_ProgContext = brainfuckParser.ProgContext
+    ANTLR_ExprContext = brainfuckParser.ExprContext
+except ImportError:
+    ANTLR_ProgContext = None
+    ANTLR_ExprContext = None
+
+try:
+    from gen.new_brainfuckParser import ProgContext as Custom_ProgContext
+    from gen.new_brainfuckParser import ExprContext as Custom_ExprContext
+except ImportError:
+    Custom_ProgContext = None
+    Custom_ExprContext = None
+
+
 
 @dataclass
 class CommandNode:
@@ -23,15 +39,40 @@ class ProgramNode:
 AstNode = CommandNode | LoopNode
 
 
-def build_ast(ctx: brainfuckParser.ProgContext | brainfuckParser.ExprContext) -> ProgramNode | AstNode:
-    if isinstance(ctx, brainfuckParser.ProgContext):
-        return ProgramNode([build_ast(expr_ctx) for expr_ctx in ctx.expr()])
+def _is_prog_context(ctx) -> bool:
+    if ANTLR_ProgContext and isinstance(ctx, ANTLR_ProgContext):
+        return True
+    if Custom_ProgContext and isinstance(ctx, Custom_ProgContext):
+        return True
+    return type(ctx).__name__ == 'ProgContext'
+
+
+def _is_expr_context(ctx) -> bool:
+    if ANTLR_ExprContext and isinstance(ctx, ANTLR_ExprContext):
+        return True
+    if Custom_ExprContext and isinstance(ctx, Custom_ExprContext):
+        return True
+    return type(ctx).__name__ == 'ExprContext'
+
+
+def build_ast(ctx) -> Union[ProgramNode, AstNode]:
+    
+    if _is_prog_context(ctx):
+        exprs = ctx.expr()
+        if exprs is None:
+            exprs = []
+        return ProgramNode([build_ast(expr_ctx) for expr_ctx in exprs])
 
     command = ctx.COMMAND()
     if command is not None:
         return CommandNode(command.getText())
 
-    return LoopNode([build_ast(expr_ctx) for expr_ctx in ctx.expr()])
+    exprs = ctx.expr()
+    if exprs is None:
+        exprs = []
+    return LoopNode([build_ast(expr_ctx) for expr_ctx in exprs])
+
+
 
 
 def format_ast(node: ProgramNode | AstNode) -> str:

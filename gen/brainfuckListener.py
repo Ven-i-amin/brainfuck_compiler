@@ -9,21 +9,25 @@ else:
     from brainfuckParser import brainfuckParser
 
 # This class defines a complete listener for a parse tree produced by brainfuckParser.
-class brainfuckListener(ParseTreeListener):
+class brainfuckListener:
+    """Listener совместимый с новым парсером"""
+    
     def __init__(self):
         self.machine = BrainfuckMachine()
-        self.ast: ProgramNode | None = None
-
-    def _execute_expr(self, ctx: brainfuckParser.ExprContext):
+        self.ast = None
+    
+    def _execute_expr(self, ctx):
+        """Выполняет выражение"""
         command = ctx.COMMAND()
         if command is not None:
             self._execute_command(command.getText())
             return
-
+        
+        # Это цикл
         while self.machine.cycle_working():
             for nested_expr in ctx.expr():
                 self._execute_expr(nested_expr)
-
+    
     def _execute_command(self, command: str):
         if command in [">", "<"]:
             self.machine.move_pointer(command)
@@ -35,27 +39,23 @@ class brainfuckListener(ParseTreeListener):
             self.machine.input()
         else:
             raise ValueError(f"Unsupported command: {command}")
-
-
-    # Enter a parse tree produced by brainfuckParser#prog.
-    def enterProg(self, ctx:brainfuckParser.ProgContext):
+    
+    def enterProg(self, ctx):
+        """Вход в программу"""
+        from brainfuck_ast import build_ast
         self.ast = build_ast(ctx)
+        
         for expr_ctx in ctx.expr():
             self._execute_expr(expr_ctx)
-
-    # Exit a parse tree produced by brainfuckParser#prog.
-    def exitProg(self, ctx:brainfuckParser.ProgContext):
+    
+    def exitProg(self, ctx):
         pass
-
-
-    # Enter a parse tree produced by brainfuckParser#expr.
-    def enterExpr(self, ctx:brainfuckParser.ExprContext):
+    
+    def enterExpr(self, ctx):
         pass
-
-    # Exit a parse tree produced by brainfuckParser#expr.
-    def exitExpr(self, ctx:brainfuckParser.ExprContext):
+    
+    def exitExpr(self, ctx):
         pass
-
 
 
 del brainfuckParser
