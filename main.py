@@ -183,7 +183,15 @@ def main() -> None:
     args = parser.parse_args()
 
     try:
-        if args.command == "compile-asm":
+        if args.command is None:
+            compile_to_asm(
+                "input.bf",
+                "out.asm",
+                show_source=True,
+                show_ast=True,
+                show_optimization=True,
+            )
+        elif args.command == "compile-asm":
             input_file = args.input_file
             output_file = args.output_file or os.path.splitext(input_file)[0] + ".asm"
             show_source, show_ast, show_optimization = resolve_output_flags(args)
@@ -203,11 +211,9 @@ def main() -> None:
                 show_ast=show_ast,
                 show_optimization=show_optimization,
             )
-        else:
-            parser.print_help()
-            raise SystemExit(1)
     except FileNotFoundError:
-        print(f"Error: file '{input_file}' not found")
+        missing_file = locals().get("input_file", "input.bf")
+        print(f"Error: file '{missing_file}' not found")
         raise SystemExit(1)
     except Exception as error:
         print(f"Critical error: {error}")
