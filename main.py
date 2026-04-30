@@ -6,8 +6,8 @@ from antlr4 import CommonTokenStream, InputStream
 
 from brainfuck.brainfuck import BrainfuckInterpreter
 from brainfuck.compiler.x86_compiler import X86Compiler
-from errors.error_listener import CustomErrorListener
 from errors.brainfuck_errors import SyntaxChecker
+from errors.error_listener import CustomErrorListener
 from gen.brainfuckLexer import brainfuckLexer
 from gen.brainfuckParser import brainfuckParser
 from middleend.ast_optimizer import ASTOptimizer
@@ -19,18 +19,8 @@ def parse_source(input_file: str, show_source: bool = False):
     with open(input_file, "r", encoding="utf-8") as source:
         source_code = source.read()
 
-<<<<<<< HEAD
-    try:
-        input_file = "input.bf"
-        
-        with open(input_file, "r", encoding="utf-8") as f:
-            source_code = f.read()
-
-        print(f"\nИсходная программа ({input_file}):")
-=======
     if show_source:
         print(f"\nSource program ({input_file}):")
->>>>>>> 547ca7e (add something)
         print("-" * 50)
         print(source_code)
         print("-" * 50)
