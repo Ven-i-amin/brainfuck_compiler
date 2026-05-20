@@ -13,6 +13,8 @@ from gen.brainfuckParser import brainfuckParser
 from middleend.ast_optimizer import ASTOptimizer
 from middleend.brainfuck_ast import build_ast, format_ast
 from middleend.semantic_analyzer import SemanticAnalyzer
+from brainfuck.compiler.vm_compiler import VMCompiler
+from vm.vm_interpreter import VirtualMachine
 
 
 def parse_source(input_file: str, show_source: bool = False):
@@ -167,6 +169,8 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("input_file", help="Path to the Brainfuck source file")
     add_output_flags(run_parser)
 
+    add_vm_commands(subparsers)
+
     return parser
 
 
@@ -178,19 +182,97 @@ def resolve_output_flags(args):
     )
 
 
+def compile_to_vm(
+    input_file: str,
+    output_file: str,
+    show_source: bool = False,
+    show_ast: bool = False,
+    show_optimization: bool = False,
+) -> str:
+    """Компиляция в байт-код VM"""
+    ast = prepare_ast(
+        input_file,
+        show_source=show_source,
+        show_ast=show_ast,
+        show_optimization=show_optimization,
+    )
+    compiler = VMCompiler()
+    return compiler.execute(ast, output_file=output_file, verbose=show_optimization)
+
+
+def run_vm(
+    input_file: str,
+    show_source: bool = False,
+    show_ast: bool = False,
+    show_optimization: bool = False,
+):
+    """Запуск через виртуальную машину"""
+    import tempfile
+    import os
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        vm_file = os.path.join(tmpdir, "program.vmbf")
+
+        compile_to_vm(
+            input_file, vm_file,
+            show_source=show_source,
+            show_ast=show_ast,
+            show_optimization=show_optimization,
+        )
+
+        with open(vm_file, "rb") as f:
+            bytecode = f.read()
+
+        vm = VirtualMachine()
+        vm.load_bytecode(bytecode)
+        vm.run(verbose=show_optimization)
+
+
+def add_vm_commands(subparsers):
+
+    compile_vm_parser = subparsers.add_parser(
+        "compile-vm",
+        help="Compile Brainfuck to VM bytecode"
+    )
+    compile_vm_parser.add_argument("input_file", help="Path to .bf file")
+    compile_vm_parser.add_argument("-o", "--output", dest="output_file", help="Output .vmbf file")
+    add_output_flags(compile_vm_parser)
+
+    run_vm_parser = subparsers.add_parser(
+        "run-vm",
+        help="Run Brainfuck via virtual machine"
+    )
+    run_vm_parser.add_argument("input_file", help="Path to .bf file")
+    add_output_flags(run_vm_parser)
+
+
 def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
 
     try:
+        # if args.command is None:
+        #     compile_to_asm(
+        #         "input.bf",
+        #         "out.asm",
+        #         show_source=True,
+        #         show_ast=True,
+        #         show_optimization=True,
+        #     )
         if args.command is None:
-            compile_to_asm(
-                "input.bf",
-                "out.asm",
-                show_source=True,
-                show_ast=True,
-                show_optimization=True,
-            )
+            run_vm("input.bf", show_source=True, show_ast=True, show_optimization=True)
+
+        elif args.command == "compile-vm":
+            input_file = args.input_file
+            output_file = args.output_file or os.path.splitext(input_file)[0] + ".vmbf"
+            show_source, show_ast, show_optimization = resolve_output_flags(args)
+            compile_to_vm(input_file, output_file, show_source, show_ast, show_optimization)
+
+        elif args.command == "run-vm":
+            input_file = args.input_file
+            show_source, show_ast, show_optimization = resolve_output_flags(args)
+            run_vm(input_file, show_source, show_ast, show_optimization)
+
         elif args.command == "compile-asm":
             input_file = args.input_file
             output_file = args.output_file or os.path.splitext(input_file)[0] + ".asm"
