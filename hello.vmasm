@@ -1,0 +1,29 @@
+#main
+    inc
+    inc
+    inc
+    inc
+    inc
+    inc
+    inc
+#loop_0_start
+    jz addr_23
+    right
+    inc
+    inc
+    inc
+    inc
+    inc
+    inc
+    inc
+    left
+    dec
+#loop_0_end
+    jmp loop_0_start
+    right
+    out
+    inc
+    out
+    inc
+    out
+    halt

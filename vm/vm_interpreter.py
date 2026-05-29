@@ -3,7 +3,6 @@ from brainfuck.compiler.vm_compiler import OpCode
 
 
 class VirtualMachine:
-    """Виртуальная машина для выполнения байт-кода Brainfuck"""
 
     def __init__(self, memory_size: int = 30000):
         self.memory_size = memory_size
